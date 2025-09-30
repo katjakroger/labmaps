@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.6">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!doctype html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1">&lt;meta charset="utf-8"&gt;</p>
+<p class="p1">&lt;meta name="viewport" content="width=device-width,initial-scale=1"&gt;</p>
+<p class="p1">&lt;title&gt;Lab Availability&lt;/title&gt;</p>
+<p class="p1">&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#fafafa;margin:24px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>h1{margin:0 0 8px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.meta{color:#666;margin-bottom:14px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.controls{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>input,button{font-size:14px;padding:8px 10px;border:1px solid #ddd;border-radius:10px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>button{cursor:pointer}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.grid{display:grid;gap:10px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.row{background:#fff;border:1px solid #e7e7e7;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.name{font-weight:600}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.small{color:#666;font-size:13px;margin-top:2px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.bar{height:12px;background:#eee;border-radius:8px;overflow:hidden;margin-top:8px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.fill{height:100%;background:#2e7d32;width:0%;transition:width .4s ease}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.warn{background:#f9a825}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.bad{background:#c62828}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.badge{display:inline-block;background:#f0f0f0;border-radius:999px;padding:2px 8px;font-size:12px}</p>
+<p class="p1">&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;h1&gt;Research &amp; Learning Center – Live Labs&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="meta"&gt;Auto-refresh every 60s • &lt;span id="updated" class="badge"&gt;loading…&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="controls"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;input id="q" placeholder="Filter labs or software (e.g., MATLAB)" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;button id="clear"&gt;Clear&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="list" class="grid"&gt;&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1">const PROXY = 'https://script.google.com/macros/s/AKfycbzrcmpTB6LyKN1Q1vdLQ3bJeWUJvsmIEYkaGmZRKo_L1-EQaqFQPyG6SAWPMUcOdkiSBw/exec'; // your Apps Script web app URL</p>
+<p class="p2"><br></p>
+<p class="p1">function pct(avail,total){ return total ? Math.round((avail/total)*100) : 0; }</p>
+<p class="p1">function barClass(p){ if(p&gt;=50) return ''; if(p&gt;=15) return 'warn'; return 'bad'; }</p>
+<p class="p2"><br></p>
+<p class="p1">async function fetchSummary(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const r = await fetch(PROXY, {cache:'no-store'});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!r.ok) throw new Error('Proxy error '+r.status);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>return r.json();</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">let DATA = null;</p>
+<p class="p2"><br></p>
+<p class="p1">function render(filter=''){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const list = document.getElementById('list');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const q = filter.trim().toLowerCase();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>list.innerHTML = '';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!DATA) return;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>DATA.groups.forEach(g=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const sw = g.software || [];</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const swText = sw.join(', ');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const hay = (g.name+' '+swText).toLowerCase();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(q &amp;&amp; !hay.includes(q)) return;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const a = g.totals.available, t = g.totals.total, o = g.totals.offline, u = g.totals.in_use;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const p = pct(a, t);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const row = document.createElement('div');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>row.className = 'row';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>row.innerHTML = `</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="name"&gt;${g.name}&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="small"&gt;${a} / ${t} computers available${o ? ` (${o} offline)` : ''}&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="bar"&gt;&lt;div class="fill ${barClass(p)}" style="width:${p}%"&gt;&lt;/div&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>${sw.length ? `&lt;div class="small"&gt;Software: ${swText}&lt;/div&gt;` : ''}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>`;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>list.appendChild(row);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>document.getElementById('updated').textContent = 'Updated ' + new Date().toLocaleTimeString();</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">async function refresh(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>document.getElementById('updated').textContent = 'updating…';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>DATA = await fetchSummary();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>render(document.getElementById('q').value);</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">document.getElementById('q').addEventListener('input', e=&gt;render(e.target.value));</p>
+<p class="p1">document.getElementById('clear').addEventListener('click', ()=&gt;{ document.getElementById('q').value=''; render(''); });</p>
+<p class="p2"><br></p>
+<p class="p1">refresh();</p>
+<p class="p1">setInterval(refresh, 60*1000);</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
